@@ -33,6 +33,14 @@
     }
     .field-input:focus { border-color: #c9a96e; }
     .field-input::placeholder { color: #333; }
+    .tab-btn {
+      background: transparent; border: none; border-bottom: 2px solid transparent;
+      color: #555; font-family: 'Courier Prime', monospace; font-size: 11px;
+      letter-spacing: 0.2em; text-transform: uppercase; padding: 10px 4px;
+      cursor: pointer; transition: all 0.2s; margin-right: 28px;
+    }
+    .tab-btn:hover { color: #f0e6d3; }
+    .tab-btn.active { color: #c9a96e; border-bottom-color: #c9a96e; }
   </style>
 </head>
 <body>
@@ -44,24 +52,22 @@
       new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
     const fmtShort = (n) => {
+      if (isNaN(n) || !isFinite(n)) return "—";
       if (n >= 1000000) return "$" + (n / 1000000).toFixed(2) + "M";
       if (n >= 1000) return "$" + (n / 1000).toFixed(1) + "K";
       return fmt(n);
     };
 
-    // A numeric input field that lets users type freely, updates on blur
     function Field({ label, value, onChange, prefix, suffix, placeholder, allowDecimal }) {
       const [raw, setRaw] = useState(value === 0 ? "0" : String(value));
       const [focused, setFocused] = useState(false);
 
-      // Sync if external value changes (e.g. initial load)
       useEffect(() => {
         if (!focused) setRaw(value === 0 ? "0" : String(value));
       }, [value, focused]);
 
       const handleChange = (ev) => {
         let v = ev.target.value;
-        // Allow digits, one decimal point if allowed
         if (allowDecimal) v = v.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
         else v = v.replace(/[^0-9]/g, "");
         setRaw(v);
@@ -70,13 +76,8 @@
       const handleBlur = () => {
         setFocused(false);
         const num = allowDecimal ? parseFloat(raw) : parseInt(raw, 10);
-        if (!isNaN(num) && num >= 0) {
-          onChange(num);
-          setRaw(String(num));
-        } else {
-          // reset to last valid
-          setRaw(value === 0 ? "0" : String(value));
-        }
+        if (!isNaN(num) && num >= 0) { onChange(num); setRaw(String(num)); }
+        else setRaw(value === 0 ? "0" : String(value));
       };
 
       const e = React.createElement;
@@ -85,14 +86,10 @@
         e("div", { style: { position: "relative", display: "flex", alignItems: "center" } },
           prefix && e("span", { style: { position: "absolute", left: "14px", fontFamily: "'Playfair Display', serif", fontSize: "20px", fontWeight: 700, color: "#666", pointerEvents: "none" } }, prefix),
           e("input", {
-            className: "field-input",
-            type: "text",
+            className: "field-input", type: "text",
             inputMode: allowDecimal ? "decimal" : "numeric",
-            value: raw,
-            placeholder: placeholder || "0",
-            onChange: handleChange,
-            onFocus: () => setFocused(true),
-            onBlur: handleBlur,
+            value: raw, placeholder: placeholder || "0",
+            onChange: handleChange, onFocus: () => setFocused(true), onBlur: handleBlur,
             style: { paddingLeft: prefix ? "28px" : "14px", paddingRight: suffix ? "40px" : "14px" }
           }),
           suffix && e("span", { style: { position: "absolute", right: "14px", fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#666", pointerEvents: "none" } }, suffix)
@@ -106,8 +103,7 @@
         data.map((d, i) => {
           const h = max > 0 ? (d.value / max) * 100 : 0;
           return React.createElement("div", {
-            key: i,
-            title: "Year " + d.year + ": " + fmt(d.value),
+            key: i, title: "Year " + d.year + ": " + fmt(d.value),
             style: {
               flex: 1, height: h + "%", minHeight: "2px",
               background: "hsl(" + (35 + (i / data.length) * 20) + ", " + (50 + (i / data.length) * 20) + "%, " + (30 + (i / data.length) * 25) + "%)",
@@ -120,7 +116,8 @@
       );
     }
 
-    function App() {
+    // ── Tab 1: Standard compound interest calculator ──
+    function CalcTab() {
       const [principal, setPrincipal] = useState(10000);
       const [rate, setRate] = useState(7);
       const [years, setYears] = useState(20);
@@ -130,26 +127,20 @@
       const animRef = useRef(null);
       const prevTotal = useRef(0);
 
-      const n = compounding;
-      const r = rate / 100;
-
+      const n = compounding, r = rate / 100;
       const yearData = [];
       for (let y = 1; y <= years; y++) {
-        const compoundPrincipal = principal * Math.pow(1 + r / n, n * y);
-        const contributionFV = monthly > 0 ? monthly * (Math.pow(1 + r / n, n * y) - 1) / (r / n) : 0;
-        yearData.push({ year: y, value: compoundPrincipal + contributionFV });
+        const cp = principal * Math.pow(1 + r / n, n * y);
+        const cf = monthly > 0 ? monthly * (Math.pow(1 + r / n, n * y) - 1) / (r / n) : 0;
+        yearData.push({ year: y, value: cp + cf });
       }
-
       const finalValue = yearData[years - 1] ? yearData[years - 1].value : 0;
       const totalContributions = principal + monthly * 12 * years;
       const totalInterest = finalValue - totalContributions;
       const multiplier = totalContributions > 0 ? finalValue / totalContributions : 0;
 
       useEffect(() => {
-        const start = prevTotal.current;
-        const end = finalValue;
-        const duration = 600;
-        const startTime = performance.now();
+        const start = prevTotal.current, end = finalValue, duration = 600, startTime = performance.now();
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(function tick(now) {
           const t = Math.min((now - startTime) / duration, 1);
@@ -161,82 +152,191 @@
       }, [finalValue]);
 
       const compOptions = [{ v: 1, l: "Annually" }, { v: 4, l: "Quarterly" }, { v: 12, l: "Monthly" }, { v: 365, l: "Daily" }];
+      const e = React.createElement;
 
+      return e("div", { className: "grid" },
+        e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px" } },
+          e(Field, { label: "Initial Principal", value: principal, onChange: setPrincipal, prefix: "$", placeholder: "0" }),
+          e(Field, { label: "Annual Return (%)", value: rate, onChange: setRate, suffix: "%", allowDecimal: true, placeholder: "7" }),
+          e(Field, { label: "Time Horizon (years)", value: years, onChange: setYears, placeholder: "20" }),
+          e(Field, { label: "Monthly Addition", value: monthly, onChange: setMonthly, prefix: "$", placeholder: "0" }),
+          e("div", null,
+            e("div", { style: { fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, "Compounding"),
+            e("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } },
+              compOptions.map(o => e("button", { key: o.v, className: "comp-btn" + (compounding === o.v ? " active" : ""), onClick: () => setCompounding(o.v) }, o.l))
+            )
+          )
+        ),
+        e("div", { style: { display: "flex", flexDirection: "column", gap: "16px" } },
+          e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px", textAlign: "center" } },
+            e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Future Value"),
+            e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.03em", lineHeight: 1 } }, fmtShort(animated)),
+            e("div", { style: { marginTop: "16px", height: "1px", background: "#1e1e1e" } }),
+            e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" } },
+              e("div", null,
+                e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "CONTRIBUTED"),
+                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" } }, fmtShort(totalContributions))
+              ),
+              e("div", null,
+                e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "EARNED"),
+                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#9ec97e" } }, fmtShort(Math.max(0, totalInterest)))
+              )
+            )
+          ),
+          e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
+            e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Growth Over Time"),
+            e(BarChart, { data: yearData }),
+            e("div", { style: { display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "10px", color: "#555" } },
+              e("span", null, "Year 1"),
+              e("span", null, "Year " + Math.round(years / 2)),
+              e("span", null, "Year " + years)
+            )
+          ),
+          e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
+            e("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } },
+              e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase" } }, "Money Multiplier"),
+              e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: 900, color: "#7eb8c9" } }, multiplier > 0 ? multiplier.toFixed(2) + "×" : "—")
+            ),
+            e("div", { style: { marginTop: "12px", height: "6px", background: "#1e1e1e", borderRadius: "3px", overflow: "hidden", display: "flex" } },
+              e("div", { style: { height: "100%", width: Math.min(finalValue > 0 ? (totalContributions / finalValue) * 100 : 100, 100) + "%", background: "#3a3020" } }),
+              e("div", { style: { height: "100%", width: Math.min(finalValue > 0 ? (Math.max(0, totalInterest) / finalValue) * 100 : 0, 100) + "%", background: "linear-gradient(90deg, #9ec97e, #c9a96e)" } })
+            ),
+            e("div", { style: { display: "flex", gap: "16px", marginTop: "8px", fontSize: "10px" } },
+              e("span", { style: { color: "#5a5040" } }, "■ Principal + Contributions"),
+              e("span", { style: { color: "#9ec97e" } }, "■ Interest Earned")
+            )
+          )
+        )
+      );
+    }
+
+    // ── Tab 2: Savings goal calculator ──
+    function GoalTab() {
+      const [goal, setGoal] = useState(500000);
+      const [principal, setPrincipal] = useState(0);
+      const [rate, setRate] = useState(7);
+      const [years, setYears] = useState(20);
+      const [compounding, setCompounding] = useState(12);
+
+      const e = React.createElement;
+      const n = compounding, r = rate / 100;
+
+      // Future value of existing principal
+      const principalFV = principal * Math.pow(1 + r / n, n * years);
+      // Remaining goal after principal grows
+      const remaining = goal - principalFV;
+
+      // PMT formula: how much per period to reach remaining FV
+      // FV = PMT * ((1+r/n)^(n*t) - 1) / (r/n)
+      // PMT = FV * (r/n) / ((1+r/n)^(n*t) - 1)
+      const factor = Math.pow(1 + r / n, n * years) - 1;
+      const monthlyNeeded = (r > 0 && factor > 0 && remaining > 0) ? remaining * (r / n) / factor : (remaining > 0 ? remaining / (years * 12) : 0);
+      const weeklyNeeded = monthlyNeeded * 12 / 52;
+      const annualNeeded = monthlyNeeded * 12;
+
+      const totalContributed = principal + monthlyNeeded * 12 * years;
+      const interestEarned = goal - totalContributed;
+
+      // Year by year data for chart
+      const yearData = [];
+      for (let y = 1; y <= years; y++) {
+        const cp = principal * Math.pow(1 + r / n, n * y);
+        const cf = monthlyNeeded > 0 ? monthlyNeeded * (Math.pow(1 + r / n, n * y) - 1) / (r / n) : 0;
+        yearData.push({ year: y, value: cp + cf });
+      }
+
+      const isValid = goal > 0 && years > 0 && rate > 0;
+      const goalAlreadyMet = principalFV >= goal;
+
+      const compOptions = [{ v: 1, l: "Annually" }, { v: 4, l: "Quarterly" }, { v: 12, l: "Monthly" }, { v: 365, l: "Daily" }];
+
+      const ResultCard = (label, value, color) =>
+        e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px", textAlign: "center" } },
+          e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, label),
+          e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "32px", fontWeight: 900, color: color, letterSpacing: "-0.02em" } }, value)
+        );
+
+      return e("div", { className: "grid" },
+        // Left: Inputs
+        e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px" } },
+          e(Field, { label: "Savings Goal", value: goal, onChange: setGoal, prefix: "$", placeholder: "500000" }),
+          e(Field, { label: "Starting Amount (optional)", value: principal, onChange: setPrincipal, prefix: "$", placeholder: "0" }),
+          e(Field, { label: "Expected Annual Return (%)", value: rate, onChange: setRate, suffix: "%", allowDecimal: true, placeholder: "7" }),
+          e(Field, { label: "Time to Reach Goal (years)", value: years, onChange: setYears, placeholder: "20" }),
+          e("div", null,
+            e("div", { style: { fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, "Compounding"),
+            e("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } },
+              compOptions.map(o => e("button", { key: o.v, className: "comp-btn" + (compounding === o.v ? " active" : ""), onClick: () => setCompounding(o.v) }, o.l))
+            )
+          )
+        ),
+
+        // Right: Results
+        e("div", { style: { display: "flex", flexDirection: "column", gap: "16px" } },
+
+          goalAlreadyMet
+            ? e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px", textAlign: "center" } },
+                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#9ec97e" } }, "🎉 Your starting amount already"),
+                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#9ec97e", marginTop: "4px" } }, "reaches your goal with interest!")
+              )
+            : e(React.Fragment, null,
+                // Three contribution cards
+                e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" } },
+                  ResultCard("Weekly", isValid ? fmtShort(weeklyNeeded) : "—", "#c9a96e"),
+                  ResultCard("Monthly", isValid ? fmtShort(monthlyNeeded) : "—", "#c9a96e"),
+                  ResultCard("Annually", isValid ? fmtShort(annualNeeded) : "—", "#c9a96e")
+                ),
+
+                // Summary
+                e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px" } },
+                  e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" } },
+                    e("div", null,
+                      e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "TOTAL CONTRIBUTED"),
+                      e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" } }, isValid ? fmtShort(totalContributed) : "—")
+                    ),
+                    e("div", null,
+                      e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "INTEREST EARNED"),
+                      e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#9ec97e" } }, isValid ? fmtShort(Math.max(0, interestEarned)) : "—")
+                    )
+                  )
+                ),
+
+                // Bar chart
+                e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
+                  e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Growth Toward Goal"),
+                  e(BarChart, { data: yearData }),
+                  e("div", { style: { display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "10px", color: "#555" } },
+                    e("span", null, "Year 1"),
+                    e("span", null, "Year " + Math.round(years / 2)),
+                    e("span", null, "Year " + years)
+                  )
+                )
+              )
+        )
+      );
+    }
+
+    // ── Root App with tabs ──
+    function App() {
+      const [tab, setTab] = useState("calc");
       const e = React.createElement;
 
       return e("div", { style: { minHeight: "100vh", background: "#0e0e0e", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" } },
         e("div", { style: { width: "100%", maxWidth: "800px" } },
 
           // Header
-          e("div", { style: { marginBottom: "40px", borderLeft: "3px solid #c9a96e", paddingLeft: "20px" } },
+          e("div", { style: { marginBottom: "32px", borderLeft: "3px solid #c9a96e", paddingLeft: "20px" } },
             e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#c9a96e", textTransform: "uppercase", marginBottom: "8px" } }, "Financial Calculator"),
             e("h1", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, color: "#f0e6d3", letterSpacing: "-0.03em", lineHeight: 1 } }, "Compound", e("br"), "Interest")
           ),
 
-          e("div", { className: "grid" },
+          // Tabs
+          e("div", { style: { borderBottom: "1px solid #1e1e1e", marginBottom: "28px" } },
+            e("button", { className: "tab-btn" + (tab === "calc" ? " active" : ""), onClick: () => setTab("calc") }, "Calculator"),
+            e("button", { className: "tab-btn" + (tab === "goal" ? " active" : ""), onClick: () => setTab("goal") }, "Savings Goal")
+          ),
 
-            // Left: Controls
-            e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px" } },
-              e(Field, { label: "Initial Principal", value: principal, onChange: setPrincipal, prefix: "$", placeholder: "0" }),
-              e(Field, { label: "Annual Return (%)", value: rate, onChange: setRate, suffix: "%", allowDecimal: true, placeholder: "7" }),
-              e(Field, { label: "Time Horizon (years)", value: years, onChange: setYears, placeholder: "20" }),
-              e(Field, { label: "Monthly Addition", value: monthly, onChange: setMonthly, prefix: "$", placeholder: "0" }),
-              e("div", null,
-                e("div", { style: { fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, "Compounding"),
-                e("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } },
-                  compOptions.map(o => e("button", { key: o.v, className: "comp-btn" + (compounding === o.v ? " active" : ""), onClick: () => setCompounding(o.v) }, o.l))
-                )
-              )
-            ),
-
-            // Right: Results
-            e("div", { style: { display: "flex", flexDirection: "column", gap: "16px" } },
-
-              // Future Value
-              e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px", textAlign: "center" } },
-                e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Future Value"),
-                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.03em", lineHeight: 1 } }, fmtShort(animated)),
-                e("div", { style: { marginTop: "16px", height: "1px", background: "#1e1e1e" } }),
-                e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" } },
-                  e("div", null,
-                    e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "CONTRIBUTED"),
-                    e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" } }, fmtShort(totalContributions))
-                  ),
-                  e("div", null,
-                    e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "EARNED"),
-                    e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#9ec97e" } }, fmtShort(Math.max(0, totalInterest)))
-                  )
-                )
-              ),
-
-              // Bar chart
-              e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
-                e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Growth Over Time"),
-                e(BarChart, { data: yearData }),
-                e("div", { style: { display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "10px", color: "#555" } },
-                  e("span", null, "Year 1"),
-                  e("span", null, "Year " + Math.round(years / 2)),
-                  e("span", null, "Year " + years)
-                )
-              ),
-
-              // Multiplier
-              e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
-                e("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } },
-                  e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase" } }, "Money Multiplier"),
-                  e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: 900, color: "#7eb8c9" } }, multiplier > 0 ? multiplier.toFixed(2) + "×" : "—")
-                ),
-                e("div", { style: { marginTop: "12px", height: "6px", background: "#1e1e1e", borderRadius: "3px", overflow: "hidden", display: "flex" } },
-                  e("div", { style: { height: "100%", width: Math.min(finalValue > 0 ? (totalContributions / finalValue) * 100 : 100, 100) + "%", background: "#3a3020" } }),
-                  e("div", { style: { height: "100%", width: Math.min(finalValue > 0 ? (Math.max(0, totalInterest) / finalValue) * 100 : 0, 100) + "%", background: "linear-gradient(90deg, #9ec97e, #c9a96e)" } })
-                ),
-                e("div", { style: { display: "flex", gap: "16px", marginTop: "8px", fontSize: "10px" } },
-                  e("span", { style: { color: "#5a5040" } }, "■ Principal + Contributions"),
-                  e("span", { style: { color: "#9ec97e" } }, "■ Interest Earned")
-                )
-              )
-            )
-          )
+          tab === "calc" ? e(CalcTab, null) : e(GoalTab, null)
         )
       );
     }
