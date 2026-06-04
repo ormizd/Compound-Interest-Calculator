@@ -22,6 +22,8 @@
     }
     .comp-btn:hover { border-color: #c9a96e; color: #c9a96e; }
     .comp-btn.active { background: rgba(201,169,110,0.13); border-color: #c9a96e; color: #c9a96e; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -129,7 +131,7 @@
             e("h1", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, color: "#f0e6d3", letterSpacing: "-0.03em", lineHeight: 1 } }, "Compound", e("br"), "Interest")
           ),
 
-          e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" } },
+          e("div", { className: "grid" },
 
             // Left: Controls
             e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px" } },
