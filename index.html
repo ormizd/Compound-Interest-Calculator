@@ -10,6 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { max-width: 100%; overflow-x: hidden; }
     body { background: #0e0e0e; font-family: 'Courier Prime', monospace; }
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: #111; }
@@ -23,7 +24,9 @@
     .comp-btn:hover { border-color: #c9a96e; color: #c9a96e; }
     .comp-btn.active { background: rgba(201,169,110,0.13); border-color: #c9a96e; color: #c9a96e; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) { .grid3 { grid-template-columns: 1fr; } }
     .field-wrap { margin-bottom: 22px; }
     .field-label { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #8a8a8a; margin-bottom: 8px; display: block; font-family: 'Courier Prime', monospace; }
     .field-input {
@@ -281,7 +284,7 @@
               )
             : e(React.Fragment, null,
                 // Three contribution cards
-                e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" } },
+                e("div", { className: "grid3" },
                   ResultCard("Weekly", isValid ? fmtShort(weeklyNeeded) : "—", "#c9a96e"),
                   ResultCard("Monthly", isValid ? fmtShort(monthlyNeeded) : "—", "#c9a96e"),
                   ResultCard("Annually", isValid ? fmtShort(annualNeeded) : "—", "#c9a96e")
