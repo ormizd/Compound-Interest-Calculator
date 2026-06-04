@@ -1,185 +1,204 @@
-import { useState, useEffect, useRef } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compound Interest Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0e0e0e; font-family: 'Courier Prime', monospace; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #111; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+    .comp-btn {
+      background: transparent; border: 1px solid #2a2a2a; color: #666;
+      padding: 6px 12px; font-family: 'Courier Prime', monospace;
+      font-size: 11px; letter-spacing: 0.1em; cursor: pointer;
+      transition: all 0.2s; border-radius: 2px;
+    }
+    .comp-btn:hover { border-color: #c9a96e; color: #c9a96e; }
+    .comp-btn.active { background: rgba(201,169,110,0.13); border-color: #c9a96e; color: #c9a96e; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    const { useState, useEffect, useRef } = React;
 
-const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+    const fmt = (n) =>
+      new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
-const fmtShort = (n) => {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-  return fmt(n);
-};
+    const fmtShort = (n) => {
+      if (n >= 1000000) return "$" + (n / 1000000).toFixed(2) + "M";
+      if (n >= 1000) return "$" + (n / 1000).toFixed(1) + "K";
+      return fmt(n);
+    };
 
-function Slider({ label, value, min, max, step, onChange, format, color }) {
-  const pct = ((value - min) / (max - min)) * 100;
-  return (
-    <div style={{ marginBottom: "28px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "10px" }}>
-        <span style={{ fontFamily: "'Courier Prime', monospace", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a8a8a" }}>{label}</span>
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "22px", fontWeight: "700", color: color || "#f0e6d3", letterSpacing: "-0.02em" }}>{format(value)}</span>
-      </div>
-      <div style={{ position: "relative", height: "4px", background: "#2a2a2a", borderRadius: "2px" }}>
-        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${pct}%`, background: color || "#c9a96e", borderRadius: "2px", transition: "width 0.1s" }} />
-        <input
-          type="range" min={min} max={max} step={step} value={value}
-          onChange={e => onChange(Number(e.target.value))}
-          style={{ position: "absolute", top: "-8px", left: 0, width: "100%", height: "20px", opacity: 0, cursor: "pointer", margin: 0 }}
-        />
-        <div style={{ position: "absolute", top: "-6px", left: `calc(${pct}% - 8px)`, width: "16px", height: "16px", borderRadius: "50%", background: color || "#c9a96e", border: "2px solid #111", boxShadow: "0 0 0 3px rgba(201,169,110,0.2)", transition: "left 0.1s", pointerEvents: "none" }} />
-      </div>
-    </div>
-  );
-}
+    function Slider({ label, value, min, max, step, onChange, format, color }) {
+      const pct = ((value - min) / (max - min)) * 100;
+      return React.createElement("div", { style: { marginBottom: "28px" } },
+        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "10px" } },
+          React.createElement("span", { style: { fontFamily: "'Courier Prime', monospace", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a8a8a" } }, label),
+          React.createElement("span", { style: { fontFamily: "'Playfair Display', serif", fontSize: "22px", fontWeight: "700", color: color || "#f0e6d3", letterSpacing: "-0.02em" } }, format(value))
+        ),
+        React.createElement("div", { style: { position: "relative", height: "4px", background: "#2a2a2a", borderRadius: "2px" } },
+          React.createElement("div", { style: { position: "absolute", left: 0, top: 0, height: "100%", width: pct + "%", background: color || "#c9a96e", borderRadius: "2px", transition: "width 0.1s" } }),
+          React.createElement("input", {
+            type: "range", min, max, step, value,
+            onChange: e => onChange(Number(e.target.value)),
+            style: { position: "absolute", top: "-8px", left: 0, width: "100%", height: "20px", opacity: 0, cursor: "pointer", margin: 0 }
+          }),
+          React.createElement("div", { style: { position: "absolute", top: "-6px", left: "calc(" + pct + "% - 8px)", width: "16px", height: "16px", borderRadius: "50%", background: color || "#c9a96e", border: "2px solid #111", boxShadow: "0 0 0 3px rgba(201,169,110,0.2)", transition: "left 0.1s", pointerEvents: "none" } })
+        )
+      );
+    }
 
-function BarChart({ data, total }) {
-  const max = Math.max(...data.map(d => d.value));
-  return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: "3px", height: "80px", padding: "0 2px" }}>
-      {data.map((d, i) => {
-        const h = max > 0 ? (d.value / max) * 100 : 0;
-        const isPrincipal = d.type === "principal";
-        return (
-          <div key={i} title={`Year ${d.year}: ${fmt(d.value)}`}
-            style={{ flex: 1, height: `${h}%`, minHeight: "2px", background: isPrincipal ? "#3a3020" : `hsl(${35 + (i / data.length) * 20}, ${50 + (i / data.length) * 20}%, ${30 + (i / data.length) * 25}%)`, borderRadius: "2px 2px 0 0", transition: "height 0.5s cubic-bezier(0.34,1.56,0.64,1)", transitionDelay: `${i * 15}ms`, cursor: "default" }}
-          />
-        );
-      })}
-    </div>
-  );
-}
+    function BarChart({ data }) {
+      const max = Math.max(...data.map(d => d.value));
+      return React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: "3px", height: "80px", padding: "0 2px" } },
+        data.map((d, i) => {
+          const h = max > 0 ? (d.value / max) * 100 : 0;
+          return React.createElement("div", {
+            key: i,
+            title: "Year " + d.year + ": " + fmt(d.value),
+            style: {
+              flex: 1, height: h + "%", minHeight: "2px",
+              background: "hsl(" + (35 + (i / data.length) * 20) + ", " + (50 + (i / data.length) * 20) + "%, " + (30 + (i / data.length) * 25) + "%)",
+              borderRadius: "2px 2px 0 0",
+              transition: "height 0.5s cubic-bezier(0.34,1.56,0.64,1)",
+              transitionDelay: (i * 15) + "ms"
+            }
+          });
+        })
+      );
+    }
 
-export default function App() {
-  const [principal, setPrincipal] = useState(10000);
-  const [rate, setRate] = useState(7);
-  const [years, setYears] = useState(20);
-  const [monthly, setMonthly] = useState(200);
-  const [compounding, setCompounding] = useState(12);
+    function App() {
+      const [principal, setPrincipal] = useState(10000);
+      const [rate, setRate] = useState(7);
+      const [years, setYears] = useState(20);
+      const [monthly, setMonthly] = useState(200);
+      const [compounding, setCompounding] = useState(12);
+      const [animated, setAnimated] = useState(0);
+      const animRef = useRef(null);
+      const prevTotal = useRef(0);
 
-  const [animated, setAnimated] = useState(0);
-  const animRef = useRef(null);
-  const prevTotal = useRef(0);
+      const n = compounding;
+      const r = rate / 100;
 
-  const n = compounding;
-  const r = rate / 100;
+      const yearData = [];
+      for (let y = 1; y <= years; y++) {
+        const compoundPrincipal = principal * Math.pow(1 + r / n, n * y);
+        const contributionFV = monthly > 0 ? monthly * (Math.pow(1 + r / n, n * y) - 1) / (r / n) : 0;
+        yearData.push({ year: y, value: compoundPrincipal + contributionFV });
+      }
 
-  // Calculate year-by-year breakdown
-  const yearData = [];
-  for (let y = 1; y <= years; y++) {
-    const compoundPrincipal = principal * Math.pow(1 + r / n, n * y);
-    const contributionFV = monthly > 0 ? monthly * (Math.pow(1 + r / n, n * y) - 1) / (r / n) : 0;
-    yearData.push({ year: y, value: compoundPrincipal + contributionFV });
-  }
+      const finalValue = yearData[years - 1] ? yearData[years - 1].value : 0;
+      const totalContributions = principal + monthly * 12 * years;
+      const totalInterest = finalValue - totalContributions;
 
-  const finalValue = yearData[years - 1]?.value || 0;
-  const totalContributions = principal + monthly * 12 * years;
-  const totalInterest = finalValue - totalContributions;
+      useEffect(() => {
+        const start = prevTotal.current;
+        const end = finalValue;
+        const duration = 600;
+        const startTime = performance.now();
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(function tick(now) {
+          const t = Math.min((now - startTime) / duration, 1);
+          const ease = 1 - Math.pow(1 - t, 3);
+          setAnimated(start + (end - start) * ease);
+          if (t < 1) animRef.current = requestAnimationFrame(tick);
+          else prevTotal.current = end;
+        });
+      }, [finalValue]);
 
-  useEffect(() => {
-    const start = prevTotal.current;
-    const end = finalValue;
-    const duration = 600;
-    const startTime = performance.now();
-    cancelAnimationFrame(animRef.current);
-    animRef.current = requestAnimationFrame(function tick(now) {
-      const t = Math.min((now - startTime) / duration, 1);
-      const ease = 1 - Math.pow(1 - t, 3);
-      setAnimated(start + (end - start) * ease);
-      if (t < 1) animRef.current = requestAnimationFrame(tick);
-      else prevTotal.current = end;
-    });
-  }, [finalValue]);
+      const compOptions = [{ v: 1, l: "Annually" }, { v: 4, l: "Quarterly" }, { v: 12, l: "Monthly" }, { v: 365, l: "Daily" }];
 
-  const compOptions = [{ v: 1, l: "Annually" }, { v: 4, l: "Quarterly" }, { v: 12, l: "Monthly" }, { v: 365, l: "Daily" }];
+      const e = React.createElement;
 
-  return (
-    <div style={{
-      minHeight: "100vh", background: "#0e0e0e",
-      fontFamily: "'Courier Prime', monospace",
-      display: "flex", alignItems: "center", justifyContent: "center", padding: "20px",
-    }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&family=Playfair+Display:wght@700;900&display=swap');
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-        .comp-btn { background: transparent; border: 1px solid #2a2a2a; color: #666; padding: 6px 12px; font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; border-radius: 2px; }
-        .comp-btn:hover { border-color: #c9a96e; color: #c9a96e; }
-        .comp-btn.active { background: #c9a96e22; border-color: #c9a96e; color: #c9a96e; }
-      `}</style>
+      return e("div", { style: { minHeight: "100vh", background: "#0e0e0e", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" } },
+        e("div", { style: { width: "100%", maxWidth: "800px" } },
 
-      <div style={{ width: "100%", maxWidth: "800px" }}>
-        {/* Header */}
-        <div style={{ marginBottom: "40px", borderLeft: "3px solid #c9a96e", paddingLeft: "20px" }}>
-          <div style={{ fontSize: "10px", letterSpacing: "0.3em", color: "#c9a96e", textTransform: "uppercase", marginBottom: "8px" }}>Financial Calculator</div>
-          <h1 style={{ margin: 0, fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, color: "#f0e6d3", letterSpacing: "-0.03em", lineHeight: 1 }}>Compound<br />Interest</h1>
-        </div>
+          // Header
+          e("div", { style: { marginBottom: "40px", borderLeft: "3px solid #c9a96e", paddingLeft: "20px" } },
+            e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#c9a96e", textTransform: "uppercase", marginBottom: "8px" } }, "Financial Calculator"),
+            e("h1", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, color: "#f0e6d3", letterSpacing: "-0.03em", lineHeight: 1 } }, "Compound", e("br"), "Interest")
+          ),
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-          {/* Left: Controls */}
-          <div style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px" }}>
-            <Slider label="Initial Principal" value={principal} min={1000} max={100000} step={500} onChange={setPrincipal} format={fmt} color="#c9a96e" />
-            <Slider label="Annual Return" value={rate} min={1} max={20} step={0.1} onChange={setRate} format={v => `${v.toFixed(1)}%`} color="#7eb8c9" />
-            <Slider label="Time Horizon" value={years} min={1} max={40} step={1} onChange={setYears} format={v => `${v}yr`} color="#9ec97e" />
-            <Slider label="Monthly Addition" value={monthly} min={0} max={2000} step={50} onChange={setMonthly} format={v => v === 0 ? "None" : fmt(v)} color="#c97e9e" />
+          e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" } },
 
-            <div>
-              <div style={{ fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" }}>Compounding</div>
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                {compOptions.map(o => (
-                  <button key={o.v} className={`comp-btn ${compounding === o.v ? "active" : ""}`} onClick={() => setCompounding(o.v)}>{o.l}</button>
-                ))}
-              </div>
-            </div>
-          </div>
+            // Left: Controls
+            e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px" } },
+              e(Slider, { label: "Initial Principal", value: principal, min: 1000, max: 100000, step: 500, onChange: setPrincipal, format: fmt, color: "#c9a96e" }),
+              e(Slider, { label: "Annual Return", value: rate, min: 1, max: 20, step: 0.1, onChange: setRate, format: v => v.toFixed(1) + "%", color: "#7eb8c9" }),
+              e(Slider, { label: "Time Horizon", value: years, min: 1, max: 40, step: 1, onChange: setYears, format: v => v + "yr", color: "#9ec97e" }),
+              e(Slider, { label: "Monthly Addition", value: monthly, min: 0, max: 2000, step: 50, onChange: setMonthly, format: v => v === 0 ? "None" : fmt(v), color: "#c97e9e" }),
+              e("div", null,
+                e("div", { style: { fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, "Compounding"),
+                e("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } },
+                  compOptions.map(o => e("button", { key: o.v, className: "comp-btn" + (compounding === o.v ? " active" : ""), onClick: () => setCompounding(o.v) }, o.l))
+                )
+              )
+            ),
 
-          {/* Right: Results */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {/* Big number */}
-            <div style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px", textAlign: "center" }}>
-              <div style={{ fontSize: "10px", letterSpacing: "0.3em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" }}>Future Value</div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.03em", lineHeight: 1, transition: "0.1s" }}>
-                {fmtShort(animated)}
-              </div>
-              <div style={{ marginTop: "16px", height: "1px", background: "#1e1e1e" }} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" }}>
-                <div>
-                  <div style={{ fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" }}>CONTRIBUTED</div>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" }}>{fmtShort(totalContributions)}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" }}>EARNED</div>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#9ec97e" }}>{fmtShort(Math.max(0, totalInterest))}</div>
-                </div>
-              </div>
-            </div>
+            // Right: Results
+            e("div", { style: { display: "flex", flexDirection: "column", gap: "16px" } },
 
-            {/* Growth ratio */}
-            <div style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" }}>
-              <div style={{ fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" }}>Growth Over Time</div>
-              <BarChart data={yearData} total={finalValue} />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "10px", color: "#555" }}>
-                <span>Year 1</span><span>Year {Math.round(years / 2)}</span><span>Year {years}</span>
-              </div>
-            </div>
+              // Future Value
+              e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px", textAlign: "center" } },
+                e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Future Value"),
+                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.03em", lineHeight: 1 } }, fmtShort(animated)),
+                e("div", { style: { marginTop: "16px", height: "1px", background: "#1e1e1e" } }),
+                e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" } },
+                  e("div", null,
+                    e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "CONTRIBUTED"),
+                    e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" } }, fmtShort(totalContributions))
+                  ),
+                  e("div", null,
+                    e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "EARNED"),
+                    e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#9ec97e" } }, fmtShort(Math.max(0, totalInterest)))
+                  )
+                )
+              ),
 
-            {/* Multiplier */}
-            <div style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase" }}>Money Multiplier</div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: 900, color: "#7eb8c9" }}>
-                  {(finalValue / totalContributions).toFixed(2)}×
-                </div>
-              </div>
-              <div style={{ marginTop: "12px", height: "6px", background: "#1e1e1e", borderRadius: "3px", overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${Math.min((totalContributions / finalValue) * 100, 100)}%`, background: "#3a3020", borderRadius: "3px", display: "inline-block" }} />
-                <div style={{ height: "100%", width: `${Math.min((Math.max(0, totalInterest) / finalValue) * 100, 100)}%`, background: "linear-gradient(90deg, #9ec97e, #c9a96e)", borderRadius: "0 3px 3px 0", display: "inline-block", marginLeft: "-2px" }} />
-              </div>
-              <div style={{ display: "flex", gap: "16px", marginTop: "8px", fontSize: "10px", color: "#555" }}>
-                <span style={{ color: "#5a5040" }}>■ Principal + Contributions</span>
-                <span style={{ color: "#9ec97e" }}>■ Interest Earned</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+              // Bar chart
+              e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
+                e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Growth Over Time"),
+                e(BarChart, { data: yearData }),
+                e("div", { style: { display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "10px", color: "#555" } },
+                  e("span", null, "Year 1"),
+                  e("span", null, "Year " + Math.round(years / 2)),
+                  e("span", null, "Year " + years)
+                )
+              ),
+
+              // Multiplier
+              e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
+                e("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } },
+                  e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase" } }, "Money Multiplier"),
+                  e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: 900, color: "#7eb8c9" } }, (finalValue / totalContributions).toFixed(2) + "×")
+                ),
+                e("div", { style: { marginTop: "12px", height: "6px", background: "#1e1e1e", borderRadius: "3px", overflow: "hidden", display: "flex" } },
+                  e("div", { style: { height: "100%", width: Math.min((totalContributions / finalValue) * 100, 100) + "%", background: "#3a3020" } }),
+                  e("div", { style: { height: "100%", width: Math.min((Math.max(0, totalInterest) / finalValue) * 100, 100) + "%", background: "linear-gradient(90deg, #9ec97e, #c9a96e)" } })
+                ),
+                e("div", { style: { display: "flex", gap: "16px", marginTop: "8px", fontSize: "10px" } },
+                  e("span", { style: { color: "#5a5040" } }, "■ Principal + Contributions"),
+                  e("span", { style: { color: "#9ec97e" } }, "■ Interest Earned")
+                )
+              )
+            )
+          )
+        )
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(React.createElement(App));
+  </script>
+</body>
+</html>
