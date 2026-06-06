@@ -40,7 +40,7 @@
       background: transparent; border: none; border-bottom: 2px solid transparent;
       color: #555; font-family: 'Courier Prime', monospace; font-size: 11px;
       letter-spacing: 0.2em; text-transform: uppercase; padding: 10px 4px;
-      cursor: pointer; transition: all 0.2s; margin-right: 28px;
+      cursor: pointer; transition: all 0.2s; margin-right: 24px;
     }
     .tab-btn:hover { color: #f0e6d3; }
     .tab-btn.active { color: #c9a96e; border-bottom-color: #c9a96e; }
@@ -64,25 +64,19 @@
     function Field({ label, value, onChange, prefix, suffix, placeholder, allowDecimal }) {
       const [raw, setRaw] = useState(value === 0 ? "0" : String(value));
       const [focused, setFocused] = useState(false);
-
-      useEffect(() => {
-        if (!focused) setRaw(value === 0 ? "0" : String(value));
-      }, [value, focused]);
-
+      useEffect(() => { if (!focused) setRaw(value === 0 ? "0" : String(value)); }, [value, focused]);
       const handleChange = (ev) => {
         let v = ev.target.value;
         if (allowDecimal) v = v.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
         else v = v.replace(/[^0-9]/g, "");
         setRaw(v);
       };
-
       const handleBlur = () => {
         setFocused(false);
         const num = allowDecimal ? parseFloat(raw) : parseInt(raw, 10);
         if (!isNaN(num) && num >= 0) { onChange(num); setRaw(String(num)); }
         else setRaw(value === 0 ? "0" : String(value));
       };
-
       const e = React.createElement;
       return e("div", { className: "field-wrap" },
         e("label", { className: "field-label" }, label),
@@ -100,16 +94,17 @@
       );
     }
 
-    function BarChart({ data }) {
+    function BarChart({ data, colorStart, colorEnd }) {
       const max = Math.max(...data.map(d => d.value));
+      const cs = colorStart || 35, ce = colorEnd || 55;
       return React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: "3px", height: "80px", padding: "0 2px" } },
         data.map((d, i) => {
           const h = max > 0 ? (d.value / max) * 100 : 0;
           return React.createElement("div", {
-            key: i, title: "Year " + d.year + ": " + fmt(d.value),
+            key: i, title: d.label + ": " + fmt(d.value),
             style: {
               flex: 1, height: h + "%", minHeight: "2px",
-              background: "hsl(" + (35 + (i / data.length) * 20) + ", " + (50 + (i / data.length) * 20) + "%, " + (30 + (i / data.length) * 25) + "%)",
+              background: "hsl(" + (cs + (i / data.length) * (ce - cs)) + ", " + (50 + (i / data.length) * 20) + "%, " + (30 + (i / data.length) * 25) + "%)",
               borderRadius: "2px 2px 0 0",
               transition: "height 0.5s cubic-bezier(0.34,1.56,0.64,1)",
               transitionDelay: (i * 15) + "ms"
@@ -119,7 +114,7 @@
       );
     }
 
-    // ── Tab 1: Standard compound interest calculator ──
+    // ── Tab 1: Compound Interest Calculator ──
     function CalcTab() {
       const [principal, setPrincipal] = useState(10000);
       const [rate, setRate] = useState(7);
@@ -135,7 +130,7 @@
       for (let y = 1; y <= years; y++) {
         const cp = principal * Math.pow(1 + r / n, n * y);
         const cf = monthly > 0 ? monthly * (Math.pow(1 + r / n, n * y) - 1) / (r / n) : 0;
-        yearData.push({ year: y, value: cp + cf });
+        yearData.push({ label: "Year " + y, value: cp + cf });
       }
       const finalValue = yearData[years - 1] ? yearData[years - 1].value : 0;
       const totalContributions = principal + monthly * 12 * years;
@@ -176,23 +171,15 @@
             e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.03em", lineHeight: 1 } }, fmtShort(animated)),
             e("div", { style: { marginTop: "16px", height: "1px", background: "#1e1e1e" } }),
             e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" } },
-              e("div", null,
-                e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "CONTRIBUTED"),
-                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" } }, fmtShort(totalContributions))
-              ),
-              e("div", null,
-                e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "EARNED"),
-                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#9ec97e" } }, fmtShort(Math.max(0, totalInterest)))
-              )
+              e("div", null, e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "CONTRIBUTED"), e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" } }, fmtShort(totalContributions))),
+              e("div", null, e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "EARNED"), e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#9ec97e" } }, fmtShort(Math.max(0, totalInterest))))
             )
           ),
           e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
             e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Growth Over Time"),
             e(BarChart, { data: yearData }),
             e("div", { style: { display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "10px", color: "#555" } },
-              e("span", null, "Year 1"),
-              e("span", null, "Year " + Math.round(years / 2)),
-              e("span", null, "Year " + years)
+              e("span", null, "Year 1"), e("span", null, "Year " + Math.round(years / 2)), e("span", null, "Year " + years)
             )
           ),
           e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
@@ -213,54 +200,38 @@
       );
     }
 
-    // ── Tab 2: Savings goal calculator ──
+    // ── Tab 2: Savings Goal ──
     function GoalTab() {
       const [goal, setGoal] = useState(500000);
       const [principal, setPrincipal] = useState(0);
       const [rate, setRate] = useState(7);
       const [years, setYears] = useState(20);
       const [compounding, setCompounding] = useState(12);
-
       const e = React.createElement;
       const n = compounding, r = rate / 100;
-
-      // Future value of existing principal
       const principalFV = principal * Math.pow(1 + r / n, n * years);
-      // Remaining goal after principal grows
       const remaining = goal - principalFV;
-
-      // PMT formula: how much per period to reach remaining FV
-      // FV = PMT * ((1+r/n)^(n*t) - 1) / (r/n)
-      // PMT = FV * (r/n) / ((1+r/n)^(n*t) - 1)
       const factor = Math.pow(1 + r / n, n * years) - 1;
       const monthlyNeeded = (r > 0 && factor > 0 && remaining > 0) ? remaining * (r / n) / factor : (remaining > 0 ? remaining / (years * 12) : 0);
       const weeklyNeeded = monthlyNeeded * 12 / 52;
       const annualNeeded = monthlyNeeded * 12;
-
       const totalContributed = principal + monthlyNeeded * 12 * years;
       const interestEarned = goal - totalContributed;
-
-      // Year by year data for chart
       const yearData = [];
       for (let y = 1; y <= years; y++) {
         const cp = principal * Math.pow(1 + r / n, n * y);
         const cf = monthlyNeeded > 0 ? monthlyNeeded * (Math.pow(1 + r / n, n * y) - 1) / (r / n) : 0;
-        yearData.push({ year: y, value: cp + cf });
+        yearData.push({ label: "Year " + y, value: cp + cf });
       }
-
       const isValid = goal > 0 && years > 0 && rate > 0;
       const goalAlreadyMet = principalFV >= goal;
-
       const compOptions = [{ v: 1, l: "Annually" }, { v: 4, l: "Quarterly" }, { v: 12, l: "Monthly" }, { v: 365, l: "Daily" }];
-
       const ResultCard = (label, value, color) =>
         e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px", textAlign: "center" } },
           e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, label),
           e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "32px", fontWeight: 900, color: color, letterSpacing: "-0.02em" } }, value)
         );
-
       return e("div", { className: "grid" },
-        // Left: Inputs
         e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px" } },
           e(Field, { label: "Savings Goal", value: goal, onChange: setGoal, prefix: "$", placeholder: "500000" }),
           e(Field, { label: "Starting Amount (optional)", value: principal, onChange: setPrincipal, prefix: "$", placeholder: "0" }),
@@ -273,45 +244,28 @@
             )
           )
         ),
-
-        // Right: Results
         e("div", { style: { display: "flex", flexDirection: "column", gap: "16px" } },
-
           goalAlreadyMet
             ? e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px", textAlign: "center" } },
-                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#9ec97e" } }, "🎉 Your starting amount already"),
-                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#9ec97e", marginTop: "4px" } }, "reaches your goal with interest!")
+                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#9ec97e" } }, "🎉 Your starting amount already reaches your goal with interest!")
               )
             : e(React.Fragment, null,
-                // Three contribution cards
                 e("div", { className: "grid3" },
                   ResultCard("Weekly", isValid ? fmtShort(weeklyNeeded) : "—", "#c9a96e"),
                   ResultCard("Monthly", isValid ? fmtShort(monthlyNeeded) : "—", "#c9a96e"),
                   ResultCard("Annually", isValid ? fmtShort(annualNeeded) : "—", "#c9a96e")
                 ),
-
-                // Summary
                 e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px" } },
                   e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" } },
-                    e("div", null,
-                      e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "TOTAL CONTRIBUTED"),
-                      e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" } }, isValid ? fmtShort(totalContributed) : "—")
-                    ),
-                    e("div", null,
-                      e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "INTEREST EARNED"),
-                      e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#9ec97e" } }, isValid ? fmtShort(Math.max(0, interestEarned)) : "—")
-                    )
+                    e("div", null, e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "TOTAL CONTRIBUTED"), e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" } }, isValid ? fmtShort(totalContributed) : "—")),
+                    e("div", null, e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "INTEREST EARNED"), e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#9ec97e" } }, isValid ? fmtShort(Math.max(0, interestEarned)) : "—"))
                   )
                 ),
-
-                // Bar chart
                 e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
                   e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Growth Toward Goal"),
                   e(BarChart, { data: yearData }),
                   e("div", { style: { display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "10px", color: "#555" } },
-                    e("span", null, "Year 1"),
-                    e("span", null, "Year " + Math.round(years / 2)),
-                    e("span", null, "Year " + years)
+                    e("span", null, "Year 1"), e("span", null, "Year " + Math.round(years / 2)), e("span", null, "Year " + years)
                   )
                 )
               )
@@ -319,27 +273,151 @@
       );
     }
 
-    // ── Root App with tabs ──
+    // ── Tab 3: Debt Payoff Calculator ──
+    function DebtTab() {
+      const [balance, setBalance] = useState(15000);
+      const [rate, setRate] = useState(19.99);
+      const [payment, setPayment] = useState(400);
+      const e = React.createElement;
+
+      const monthlyRate = rate / 100 / 12;
+
+      // Calculate payoff: month by month
+      let months = 0, totalInterestPaid = 0, remaining = balance;
+      const monthData = [];
+
+      if (payment > 0 && balance > 0) {
+        const minPayment = monthlyRate > 0 ? balance * monthlyRate * 1.01 : 1; // just above interest-only
+        if (monthlyRate === 0) {
+          months = Math.ceil(balance / payment);
+          totalInterestPaid = 0;
+          for (let m = 1; m <= Math.min(months, 360); m++) {
+            remaining = Math.max(0, balance - payment * m);
+            monthData.push({ label: "Mo " + m, value: remaining });
+          }
+        } else if (payment <= balance * monthlyRate) {
+          // Payment doesn't cover interest — flag it
+          months = Infinity;
+        } else {
+          // n = -log(1 - (r * PV / PMT)) / log(1 + r)
+          months = Math.ceil(-Math.log(1 - (monthlyRate * balance / payment)) / Math.log(1 + monthlyRate));
+          months = Math.min(months, 600); // cap at 50 years
+          let bal = balance;
+          for (let m = 1; m <= months; m++) {
+            const interest = bal * monthlyRate;
+            totalInterestPaid += interest;
+            bal = bal + interest - payment;
+            if (bal < 0) bal = 0;
+            // Only push one data point per 3 months to keep chart manageable
+            if (m % Math.max(1, Math.floor(months / 60)) === 0 || m === months) {
+              monthData.push({ label: "Mo " + m, value: bal });
+            }
+          }
+        }
+      }
+
+      const years = months === Infinity ? null : Math.floor(months / 12);
+      const remainingMonths = months === Infinity ? null : months % 12;
+      const totalPaid = months === Infinity ? null : payment * months;
+      const paymentCoversInterest = monthlyRate === 0 || payment > balance * monthlyRate;
+      const isValid = balance > 0 && payment > 0;
+      const alreadyPaid = balance === 0;
+
+      // Minimum payment suggestion (covers interest + 1% of principal)
+      const suggestedMin = monthlyRate > 0 ? (balance * monthlyRate + balance * 0.01) : balance * 0.02;
+
+      return e("div", { className: "grid" },
+        // Left: inputs
+        e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px" } },
+          e(Field, { label: "Current Balance", value: balance, onChange: setBalance, prefix: "$", placeholder: "0" }),
+          e(Field, { label: "Annual Interest Rate (%)", value: rate, onChange: setRate, suffix: "%", allowDecimal: true, placeholder: "19.99" }),
+          e(Field, { label: "Monthly Payment", value: payment, onChange: setPayment, prefix: "$", placeholder: "0" }),
+          // Minimum payment hint
+          isValid && e("div", { style: { marginTop: "-10px", marginBottom: "20px", fontSize: "11px", color: "#555", letterSpacing: "0.05em" } },
+            "Suggested minimum: ",
+            e("span", { style: { color: "#c9a96e" } }, fmtShort(suggestedMin) + "/mo")
+          )
+        ),
+
+        // Right: results
+        e("div", { style: { display: "flex", flexDirection: "column", gap: "16px" } },
+
+          alreadyPaid
+            ? e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px", textAlign: "center" } },
+                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#9ec97e" } }, "🎉 You're debt-free!")
+              )
+            : !paymentCoversInterest
+            ? e("div", { style: { background: "#141414", border: "1px solid #c9502a33", borderRadius: "4px", padding: "28px", textAlign: "center" } },
+                e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#c9502a", marginBottom: "12px" } }, "⚠ Payment Too Low"),
+                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", color: "#f0e6d3", lineHeight: 1.5 } }, "Your payment doesn't cover the monthly interest of " + fmtShort(balance * monthlyRate) + ". Increase your payment to start reducing the balance.")
+              )
+            : e(React.Fragment, null,
+                // Payoff time + total interest
+                e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" } },
+                  e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px", textAlign: "center" } },
+                    e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, "Debt-Free In"),
+                    e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "28px", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.02em" } },
+                      years > 0 ? years + "y " : "", remainingMonths + "m"
+                    ),
+                    e("div", { style: { fontSize: "10px", color: "#555", marginTop: "6px" } }, months + " payments")
+                  ),
+                  e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px", textAlign: "center" } },
+                    e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, "Total Interest"),
+                    e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "28px", fontWeight: 900, color: "#c97e7e", letterSpacing: "-0.02em" } }, fmtShort(totalInterestPaid)),
+                    e("div", { style: { fontSize: "10px", color: "#555", marginTop: "6px" } }, "total paid: " + fmtShort(totalPaid))
+                  )
+                ),
+
+                // Interest vs principal bar
+                e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px" } },
+                  e("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" } },
+                    e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase" } }, "Cost Breakdown"),
+                    e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 900, color: "#c97e7e" } },
+                      totalPaid > 0 ? ((totalInterestPaid / totalPaid) * 100).toFixed(0) + "% interest" : "—"
+                    )
+                  ),
+                  e("div", { style: { height: "6px", background: "#1e1e1e", borderRadius: "3px", overflow: "hidden", display: "flex" } },
+                    e("div", { style: { height: "100%", width: (totalPaid > 0 ? (balance / totalPaid) * 100 : 50) + "%", background: "#3a3020" } }),
+                    e("div", { style: { height: "100%", flex: 1, background: "linear-gradient(90deg, #c97e7e, #c9502a)" } })
+                  ),
+                  e("div", { style: { display: "flex", gap: "16px", marginTop: "8px", fontSize: "10px" } },
+                    e("span", { style: { color: "#5a5040" } }, "■ Principal: " + fmtShort(balance)),
+                    e("span", { style: { color: "#c97e7e" } }, "■ Interest: " + fmtShort(totalInterestPaid))
+                  )
+                ),
+
+                // Balance over time chart
+                monthData.length > 0 && e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px" } },
+                  e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Remaining Balance Over Time"),
+                  e(BarChart, { data: monthData.map(d => ({ ...d, value: d.value })).reverse(), colorStart: 0, colorEnd: 15 }),
+                  e("div", { style: { display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "10px", color: "#555" } },
+                    e("span", null, "Now"), e("span", null, "Halfway"), e("span", null, "Paid off")
+                  )
+                )
+              )
+        )
+      );
+    }
+
+    // ── Root App ──
     function App() {
       const [tab, setTab] = useState("calc");
       const e = React.createElement;
 
       return e("div", { style: { minHeight: "100vh", background: "#0e0e0e", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" } },
         e("div", { style: { width: "100%", maxWidth: "800px" } },
-
-          // Header
           e("div", { style: { marginBottom: "32px", borderLeft: "3px solid #c9a96e", paddingLeft: "20px" } },
             e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#c9a96e", textTransform: "uppercase", marginBottom: "8px" } }, "Financial Calculator"),
             e("h1", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, color: "#f0e6d3", letterSpacing: "-0.03em", lineHeight: 1 } }, "Compound", e("br"), "Interest")
           ),
-
-          // Tabs
-          e("div", { style: { borderBottom: "1px solid #1e1e1e", marginBottom: "28px" } },
-            e("button", { className: "tab-btn" + (tab === "calc" ? " active" : ""), onClick: () => setTab("calc") }, "Calculator"),
-            e("button", { className: "tab-btn" + (tab === "goal" ? " active" : ""), onClick: () => setTab("goal") }, "Savings Goal")
+          e("div", { style: { borderBottom: "1px solid #1e1e1e", marginBottom: "28px", overflowX: "auto" } },
+            e("div", { style: { display: "flex", minWidth: "max-content" } },
+              e("button", { className: "tab-btn" + (tab === "calc" ? " active" : ""), onClick: () => setTab("calc") }, "Calculator"),
+              e("button", { className: "tab-btn" + (tab === "goal" ? " active" : ""), onClick: () => setTab("goal") }, "Savings Goal"),
+              e("button", { className: "tab-btn" + (tab === "debt" ? " active" : ""), onClick: () => setTab("debt") }, "Debt Payoff")
+            )
           ),
-
-          tab === "calc" ? e(CalcTab, null) : e(GoalTab, null)
+          tab === "calc" ? e(CalcTab, null) : tab === "goal" ? e(GoalTab, null) : e(DebtTab, null)
         )
       );
     }
