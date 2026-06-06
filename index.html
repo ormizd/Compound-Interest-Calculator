@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Compound Interest Calculator</title>
+  <title>Financial Calculator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -407,12 +407,11 @@
       return e("div", { style: { minHeight: "100vh", background: "#0e0e0e", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" } },
         e("div", { style: { width: "100%", maxWidth: "800px" } },
           e("div", { style: { marginBottom: "32px", borderLeft: "3px solid #c9a96e", paddingLeft: "20px" } },
-            e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#c9a96e", textTransform: "uppercase", marginBottom: "8px" } }, "Financial Calculator"),
-            e("h1", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, color: "#f0e6d3", letterSpacing: "-0.03em", lineHeight: 1 } }, "Compound", e("br"), "Interest")
+            e("h1", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, color: "#f0e6d3", letterSpacing: "-0.03em", lineHeight: 1 } }, "Financial", e("br"), "Calculator")
           ),
           e("div", { style: { borderBottom: "1px solid #1e1e1e", marginBottom: "28px", overflowX: "auto" } },
             e("div", { style: { display: "flex", minWidth: "max-content" } },
-              e("button", { className: "tab-btn" + (tab === "calc" ? " active" : ""), onClick: () => setTab("calc") }, "Calculator"),
+              e("button", { className: "tab-btn" + (tab === "calc" ? " active" : ""), onClick: () => setTab("calc") }, "Compound Interest"),
               e("button", { className: "tab-btn" + (tab === "goal" ? " active" : ""), onClick: () => setTab("goal") }, "Savings Goal"),
               e("button", { className: "tab-btn" + (tab === "debt" ? " active" : ""), onClick: () => setTab("debt") }, "Debt Payoff")
             )
