@@ -147,7 +147,7 @@
       const realHigh = finalValue / Math.pow(1 + 4.5 / 100, years);
 
       useEffect(() => {
-        const start = prevTotal.current, end = finalValue, duration = 600, startTime = performance.now();
+        const start = prevTotal.current, end = realValue, duration = 600, startTime = performance.now();
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(function tick(now) {
           const t = Math.min((now - startTime) / duration, 1);
@@ -156,7 +156,7 @@
           if (t < 1) animRef.current = requestAnimationFrame(tick);
           else prevTotal.current = end;
         });
-      }, [finalValue]);
+      }, [realValue]);
 
       const compOptions = [{ v: 1, l: "Annually" }, { v: 4, l: "Quarterly" }, { v: 12, l: "Monthly" }, { v: 365, l: "Daily" }];
       const e = React.createElement;
@@ -187,13 +187,13 @@
         ),
         e("div", { style: { display: "flex", flexDirection: "column", gap: "16px" } },
           e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px", textAlign: "center" } },
-            e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Future Value"),
+            e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Future Value (in today's dollars)"),
             e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.03em", lineHeight: 1 } }, fmtShort(animated)),
-            inflation > 0 && e("div", { style: { marginTop: "10px" } },
+            e("div", { style: { marginTop: "10px" } },
               e("div", { style: { fontSize: "12px", color: "#8a8a8a", marginBottom: "6px" } },
-                "≈ ", e("span", { style: { color: "#7eb8c9", fontWeight: 700 } }, fmtShort(realValue)), " in today's dollars (at " + inflation + "% inflation)"
+                "Nominal future value: ", e("span", { style: { color: "#7eb8c9", fontWeight: 700 } }, fmtShort(finalValue)), " (before adjusting for " + inflation + "% inflation)"
               ),
-              e("div", { style: { fontSize: "10px", color: "#555", letterSpacing: "0.05em" } },
+              inflation > 0 && e("div", { style: { fontSize: "10px", color: "#555", letterSpacing: "0.05em" } },
                 "Range across 2%–4.5% inflation: ", e("span", { style: { color: "#999" } }, fmtShort(realHigh) + " – " + fmtShort(realLow))
               )
             ),
@@ -235,6 +235,12 @@
       const [rate, setRate] = useState(7);
       const [years, setYears] = useState(20);
       const [compounding, setCompounding] = useState(12);
+      const [inflation, setInflation] = useState(3);
+      const inflationPresets = [
+        { label: "Low", value: 2 },
+        { label: "Average", value: 3 },
+        { label: "High", value: 4.5 }
+      ];
       const e = React.createElement;
       const n = compounding, r = rate / 100;
       const principalFV = principal * Math.pow(1 + r / n, n * years);
@@ -252,6 +258,9 @@
         yearData.push({ label: "Year " + y, value: cp + cf });
       }
       const isValid = goal > 0 && years > 0 && rate > 0;
+      const realGoal = goal / Math.pow(1 + inflation / 100, years);
+      const realGoalLow = goal / Math.pow(1 + 2 / 100, years);
+      const realGoalHigh = goal / Math.pow(1 + 4.5 / 100, years);
       const goalAlreadyMet = principalFV >= goal;
       const compOptions = [{ v: 1, l: "Annually" }, { v: 4, l: "Quarterly" }, { v: 12, l: "Monthly" }, { v: 365, l: "Daily" }];
       const ResultCard = (label, value, color) =>
@@ -265,6 +274,17 @@
           e(Field, { label: "Starting Amount (optional)", value: principal, onChange: setPrincipal, prefix: "$", placeholder: "0" }),
           e(Field, { label: "Expected Annual Return (%)", value: rate, onChange: setRate, suffix: "%", allowDecimal: true, placeholder: "7" }),
           e(Field, { label: "Time to Reach Goal (years)", value: years, onChange: setYears, placeholder: "20" }),
+          e("div", { className: "field-wrap" },
+            e("label", { className: "field-label" }, "Expected Inflation"),
+            e("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "10px" } },
+              inflationPresets.map(p => e("button", {
+                key: p.label,
+                className: "comp-btn" + (inflation === p.value ? " active" : ""),
+                onClick: () => setInflation(p.value)
+              }, p.label + " (" + p.value + "%)"))
+            ),
+            e(Field, { label: "Custom (%)", value: inflation, onChange: setInflation, suffix: "%", allowDecimal: true, placeholder: "2.5" })
+          ),
           e("div", null,
             e("div", { style: { fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, "Compounding"),
             e("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } },
@@ -282,6 +302,16 @@
                   ResultCard("Weekly", isValid ? fmtShort(weeklyNeeded) : "—", "#c9a96e"),
                   ResultCard("Monthly", isValid ? fmtShort(monthlyNeeded) : "—", "#c9a96e"),
                   ResultCard("Annually", isValid ? fmtShort(annualNeeded) : "—", "#c9a96e")
+                ),
+                e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px", textAlign: "center" } },
+                  e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, "Your Goal in Today's Dollars"),
+                  e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "28px", fontWeight: 900, color: "#7eb8c9", letterSpacing: "-0.02em" } }, fmtShort(realGoal)),
+                  e("div", { style: { fontSize: "11px", color: "#8a8a8a", marginTop: "8px" } },
+                    "Your target of ", e("span", { style: { color: "#c9a96e" } }, fmtShort(goal)), " in " + years + " years will have the purchasing power of about ", e("span", { style: { color: "#7eb8c9" } }, fmtShort(realGoal)), " today, at " + inflation + "% inflation."
+                  ),
+                  e("div", { style: { fontSize: "10px", color: "#555", marginTop: "8px", letterSpacing: "0.05em" } },
+                    "Range across 2%–4.5% inflation: ", e("span", { style: { color: "#999" } }, fmtShort(realGoalHigh) + " – " + fmtShort(realGoalLow))
+                  )
                 ),
                 e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px" } },
                   e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" } },
