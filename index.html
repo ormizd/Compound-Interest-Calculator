@@ -186,19 +186,24 @@
           )
         ),
         e("div", { style: { display: "flex", flexDirection: "column", gap: "16px" } },
-          e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px", textAlign: "center" } },
-            e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Future Value (in today's dollars)"),
-            e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.03em", lineHeight: 1 } }, fmtShort(animated)),
-            e("div", { style: { marginTop: "10px" } },
-              e("div", { style: { fontSize: "12px", color: "#8a8a8a", marginBottom: "6px" } },
-                "Nominal future value: ", e("span", { style: { color: "#7eb8c9", fontWeight: 700 } }, fmtShort(finalValue)), " (before adjusting for " + inflation + "% inflation)"
+          e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px" } },
+            e("div", { className: "grid", style: { textAlign: "center" } },
+              e("div", null,
+                e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", color: "#7eb8c9", textTransform: "uppercase", marginBottom: "8px" } }, "Future Value"),
+                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(26px, 5vw, 38px)", fontWeight: 900, color: "#7eb8c9", letterSpacing: "-0.03em", lineHeight: 1 } }, fmtShort(finalValue)),
+                e("div", { style: { fontSize: "10px", color: "#666", marginTop: "6px" } }, "actual balance in " + years + " years")
               ),
-              inflation > 0 && e("div", { style: { fontSize: "10px", color: "#555", letterSpacing: "0.05em" } },
-                "Range across 2%–4.5% inflation: ", e("span", { style: { color: "#999" } }, fmtShort(realHigh) + " – " + fmtShort(realLow))
+              e("div", null,
+                e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", color: "#9ec97e", textTransform: "uppercase", marginBottom: "8px" } }, "Future Value Including Inflation"),
+                e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(26px, 5vw, 38px)", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.03em", lineHeight: 1 } }, fmtShort(animated)),
+                e("div", { style: { fontSize: "10px", color: "#666", marginTop: "6px" } }, "purchasing power, adjusted for inflation")
               )
             ),
+            inflation > 0 && e("div", { style: { fontSize: "10px", color: "#444", marginTop: "16px", textAlign: "center", letterSpacing: "0.05em" } },
+              "Future Value Including Inflation range across 2%–4.5% inflation: ", e("span", { style: { color: "#777" } }, fmtShort(realHigh) + " – " + fmtShort(realLow))
+            ),
             e("div", { style: { marginTop: "16px", height: "1px", background: "#1e1e1e" } }),
-            e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" } },
+            e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px", textAlign: "center" } },
               e("div", null, e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "CONTRIBUTED"), e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" } }, fmtShort(totalContributions))),
               e("div", null, e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "EARNED"), e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#9ec97e" } }, fmtShort(Math.max(0, totalInterest))))
             )
@@ -215,6 +220,7 @@
               e("div", { style: { fontSize: "10px", letterSpacing: "0.15em", color: "#8a8a8a", textTransform: "uppercase" } }, "Money Multiplier"),
               e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: 900, color: "#7eb8c9" } }, multiplier > 0 ? multiplier.toFixed(2) + "×" : "—")
             ),
+            e("div", { style: { fontSize: "10px", color: "#666", marginTop: "4px" } }, "Your money grows ", multiplier > 0 ? multiplier.toFixed(1) + "×" : "—", " its contributed value"),
             e("div", { style: { marginTop: "12px", height: "6px", background: "#1e1e1e", borderRadius: "3px", overflow: "hidden", display: "flex" } },
               e("div", { style: { height: "100%", width: Math.min(finalValue > 0 ? (totalContributions / finalValue) * 100 : 100, 100) + "%", background: "#3a3020" } }),
               e("div", { style: { height: "100%", width: Math.min(finalValue > 0 ? (Math.max(0, totalInterest) / finalValue) * 100 : 0, 100) + "%", background: "linear-gradient(90deg, #9ec97e, #c9a96e)" } })
@@ -298,19 +304,27 @@
                 e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#9ec97e" } }, "🎉 Your starting amount already reaches your goal with interest!")
               )
             : e(React.Fragment, null,
+                e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", color: "#9ec97e", textTransform: "uppercase" } }, "You Need To Save"),
                 e("div", { className: "grid3" },
                   ResultCard("Weekly", isValid ? fmtShort(weeklyNeeded) : "—", "#c9a96e"),
                   ResultCard("Monthly", isValid ? fmtShort(monthlyNeeded) : "—", "#c9a96e"),
                   ResultCard("Annually", isValid ? fmtShort(annualNeeded) : "—", "#c9a96e")
                 ),
-                e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px", textAlign: "center" } },
-                  e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, "Your Goal in Today's Dollars"),
-                  e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "28px", fontWeight: 900, color: "#7eb8c9", letterSpacing: "-0.02em" } }, fmtShort(realGoal)),
-                  e("div", { style: { fontSize: "11px", color: "#8a8a8a", marginTop: "8px" } },
-                    "Your target of ", e("span", { style: { color: "#c9a96e" } }, fmtShort(goal)), " in " + years + " years will have the purchasing power of about ", e("span", { style: { color: "#7eb8c9" } }, fmtShort(realGoal)), " today, at " + inflation + "% inflation."
+                e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px" } },
+                  e("div", { className: "grid", style: { textAlign: "center" } },
+                    e("div", null,
+                      e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", color: "#7eb8c9", textTransform: "uppercase", marginBottom: "8px" } }, "Future Value"),
+                      e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(24px, 5vw, 32px)", fontWeight: 900, color: "#7eb8c9", letterSpacing: "-0.02em", lineHeight: 1 } }, fmtShort(goal)),
+                      e("div", { style: { fontSize: "10px", color: "#666", marginTop: "6px" } }, "your goal in " + years + " years")
+                    ),
+                    e("div", null,
+                      e("div", { style: { fontSize: "10px", letterSpacing: "0.2em", color: "#9ec97e", textTransform: "uppercase", marginBottom: "8px" } }, "Future Value Including Inflation"),
+                      e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(24px, 5vw, 32px)", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.02em", lineHeight: 1 } }, fmtShort(realGoal)),
+                      e("div", { style: { fontSize: "10px", color: "#666", marginTop: "6px" } }, "purchasing power, adjusted for inflation")
+                    )
                   ),
-                  e("div", { style: { fontSize: "10px", color: "#555", marginTop: "8px", letterSpacing: "0.05em" } },
-                    "Range across 2%–4.5% inflation: ", e("span", { style: { color: "#999" } }, fmtShort(realGoalHigh) + " – " + fmtShort(realGoalLow))
+                  inflation > 0 && e("div", { style: { fontSize: "10px", color: "#444", marginTop: "16px", textAlign: "center", letterSpacing: "0.05em" } },
+                    "Future Value Including Inflation range across 2%–4.5% inflation: ", e("span", { style: { color: "#777" } }, fmtShort(realGoalHigh) + " – " + fmtShort(realGoalLow))
                   )
                 ),
                 e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "20px 24px" } },
