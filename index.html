@@ -121,6 +121,12 @@
       const [years, setYears] = useState(20);
       const [monthly, setMonthly] = useState(200);
       const [compounding, setCompounding] = useState(12);
+      const [inflation, setInflation] = useState(3);
+      const inflationPresets = [
+        { label: "Low", value: 2 },
+        { label: "Average", value: 3 },
+        { label: "High", value: 4.5 }
+      ];
       const [animated, setAnimated] = useState(0);
       const animRef = useRef(null);
       const prevTotal = useRef(0);
@@ -136,6 +142,9 @@
       const totalContributions = principal + monthly * 12 * years;
       const totalInterest = finalValue - totalContributions;
       const multiplier = totalContributions > 0 ? finalValue / totalContributions : 0;
+      const realValue = finalValue / Math.pow(1 + inflation / 100, years);
+      const realLow = finalValue / Math.pow(1 + 2 / 100, years);
+      const realHigh = finalValue / Math.pow(1 + 4.5 / 100, years);
 
       useEffect(() => {
         const start = prevTotal.current, end = finalValue, duration = 600, startTime = performance.now();
@@ -158,6 +167,17 @@
           e(Field, { label: "Annual Return (%)", value: rate, onChange: setRate, suffix: "%", allowDecimal: true, placeholder: "7" }),
           e(Field, { label: "Time Horizon (years)", value: years, onChange: setYears, placeholder: "20" }),
           e(Field, { label: "Monthly Addition", value: monthly, onChange: setMonthly, prefix: "$", placeholder: "0" }),
+          e("div", { className: "field-wrap" },
+            e("label", { className: "field-label" }, "Expected Inflation"),
+            e("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "10px" } },
+              inflationPresets.map(p => e("button", {
+                key: p.label,
+                className: "comp-btn" + (inflation === p.value ? " active" : ""),
+                onClick: () => setInflation(p.value)
+              }, p.label + " (" + p.value + "%)"))
+            ),
+            e(Field, { label: "Custom (%)", value: inflation, onChange: setInflation, suffix: "%", allowDecimal: true, placeholder: "2.5" })
+          ),
           e("div", null,
             e("div", { style: { fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a8a8a", marginBottom: "10px" } }, "Compounding"),
             e("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } },
@@ -169,6 +189,14 @@
           e("div", { style: { background: "#141414", border: "1px solid #1e1e1e", borderRadius: "4px", padding: "28px", textAlign: "center" } },
             e("div", { style: { fontSize: "10px", letterSpacing: "0.3em", color: "#8a8a8a", textTransform: "uppercase", marginBottom: "12px" } }, "Future Value"),
             e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 900, color: "#c9a96e", letterSpacing: "-0.03em", lineHeight: 1 } }, fmtShort(animated)),
+            inflation > 0 && e("div", { style: { marginTop: "10px" } },
+              e("div", { style: { fontSize: "12px", color: "#8a8a8a", marginBottom: "6px" } },
+                "≈ ", e("span", { style: { color: "#7eb8c9", fontWeight: 700 } }, fmtShort(realValue)), " in today's dollars (at " + inflation + "% inflation)"
+              ),
+              e("div", { style: { fontSize: "10px", color: "#555", letterSpacing: "0.05em" } },
+                "Range across 2%–4.5% inflation: ", e("span", { style: { color: "#999" } }, fmtShort(realHigh) + " – " + fmtShort(realLow))
+              )
+            ),
             e("div", { style: { marginTop: "16px", height: "1px", background: "#1e1e1e" } }),
             e("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" } },
               e("div", null, e("div", { style: { fontSize: "10px", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" } }, "CONTRIBUTED"), e("div", { style: { fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 700, color: "#f0e6d3" } }, fmtShort(totalContributions))),
